@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agitech Connect | Bulk Buyer Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Fraunces:ital,opsz,wght@0,9..144,100..900&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        crop: {
+                            50:'#ECFDF5',100:'#D1FAE5',200:'#A7F3D0',300:'#6EE7B7',
+                            400:'#34D399',500:'#10B981',600:'#059669',700:'#047857',
+                            800:'#065F46',900:'#064E3B',950:'#022C22'
+                        },
+                        harvest: {
+                            50:'#FFFBEB',100:'#FEF3C7',200:'#FDE68A',300:'#FCD34D',
+                            400:'#FBBF24',500:'#F59E0B',600:'#D97706',700:'#B45309',
+                            800:'#92400E',900:'#78350F',950:'#451A03'
+                        },
+                        soil: {
+                            50:'#FEF7F0',100:'#FDEBD2',200:'#F9D5B0',300:'#F4B98A',
+                            400:'#ED935E',500:'#E07030',600:'#C2511A',700:'#9A3E14',
+                            800:'#6E2C0E',900:'#4A1D08',950:'#2A0F04'
+                        }
+                    },
+                    fontFamily: {
+                        display:['Fraunces','serif'],
+                        body:['DM Sans','sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'DM Sans',sans-serif;background:#F8FAF8;color:#022C22;overflow-x:hidden}
+        ::-webkit-scrollbar{width:5px}
+        ::-webkit-scrollbar-track{background:transparent}
+        ::-webkit-scrollbar-thumb{background:#D1FAE5;border-radius:3px}
+        ::-webkit-scrollbar-thumb:hover{background:#059669}
+
+        /* Sidebar - bold gradient */
+        #sidebar{
+            position:fixed;left:0;top:0;bottom:0;width:260px;
+            background:linear-gradient(175deg,#064E3B 0%,#022C22 60%,#1A0F00 100%);
+            z-index:100;transition:transform .3s cubic-bezier(.4,0,.2,1);
+            display:flex;flex-direction:column;
+            box-shadow:6px 0 32px rgba(0,0,0,.2);
+            border-right:1px solid rgba(16,185,129,.15);
+        }
+        #sidebar.collapsed{transform:translateX(-260px)}
+        .nav-link{
+            display:flex;align-items:center;gap:12px;padding:11px 18px;margin:2px 10px;
+            border-radius:10px;color:rgba(167,243,208,.7);font-size:13.5px;font-weight:500;
+            cursor:pointer;transition:all .2s;text-decoration:none;position:relative;
+        }
+        .nav-link:hover{background:rgba(16,185,129,.12);color:#A7F3D0}
+        .nav-link.active{
+            background:linear-gradient(135deg,rgba(16,185,129,.2),rgba(245,158,11,.1));
+            color:#6EE7B7;font-weight:700;
+        }
+        .nav-link.active::before{
+            content:'';position:absolute;left:-10px;top:50%;transform:translateY(-50%);
+            width:3px;height:22px;background:linear-gradient(180deg,#10B981,#F59E0B);
+            border-radius:0 3px 3px 0;
+        }
+        .nav-link i{width:18px;text-align:center;font-size:14px}
+        .nav-badge{
+            margin-left:auto;background:linear-gradient(135deg,#F59E0B,#D97706);
+            color:#fff;font-size:10px;font-weight:800;padding:2px 7px;border-radius:8px;
+        }
+
+        /* Main */
+        #main{margin-left:260px;min-height:100vh;transition:margin-left .3s cubic-bezier(.4,0,.2,1)}
+        #main.expanded{margin-left:0}
+
+        /* Pages */
+        .page{display:none;animation:fadeUp .3s ease}
+        .page.active{display:block}
+        @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+        /* Stat cards - each with bold color identity */
+        .stat-card{
+            border-radius:16px;padding:22px;position:relative;overflow:hidden;
+            border:1px solid transparent;transition:all .25s;cursor:default;
+        }
+        .stat-card:hover{transform:translateY(-4px);box-shadow:0 16px 40px rgba(0,0,0,.1)}
+        .stat-card.green{background:linear-gradient(135deg,#064E3B,#065F46);border-color:rgba(16,185,129,.2)}
+        .stat-card.gold{background:linear-gradient(135deg,#78350F,#92400E);border-color:rgba(245,158,11,.2)}
+        .stat-card.orange{background:linear-gradient(135deg,#7C2D12,#9A3412);border-color:rgba(251,146,60,.2)}
+        .stat-card.teal{background:linear-gradient(135deg,#134E4A,#115E59);border-color:rgba(20,184,166,.2)}
+
+        /* Product card */
+        .product-card{
+            background:#fff;border-radius:14px;overflow:hidden;
+            box-shadow:0 2px 12px rgba(0,0,0,.08);border:1px solid rgba(0,0,0,.05);
+            transition:all .25s;
+        }
+        .product-card:hover{transform:translateY(-4px);box-shadow:0 8px 32px rgba(0,0,0,.15)}
+
+        /* Form inputs */
+        .form-input{
+            width:100%;padding:10px 14px;border:1px solid #D1D5DB;border-radius:8px;
+            font-size:14px;color:#374151;background:#fff;outline:none;
+            transition:border-color .2s;
+        }
+        .form-input:focus{border-color:#10B981;box-shadow:0 0 0 3px rgba(16,185,129,.1)}
+
+        /* Buttons */
+        .btn-primary{
+            background:linear-gradient(135deg,#10B981,#059669);color:#fff;border:none;
+            padding:10px 20px;border-radius:8px;font-weight:600;cursor:pointer;
+            transition:all .2s;font-size:14px;
+        }
+        .btn-primary:hover{background:linear-gradient(135deg,#059669,#047857);transform:translateY(-1px)}
+        .btn-secondary{
+            background:#fff;color:#6B7280;border:1px solid #D1D5DB;
+            padding:10px 20px;border-radius:8px;font-weight:600;cursor:pointer;
+            transition:all .2s;font-size:14px;
+        }
+        .btn-secondary:hover{background:#F9FAFB;border-color:#9CA3AF}
+        .btn-sm{padding:6px 12px;font-size:12px}
+
+        /* Badges */
+        .badge{background:#E5E7EB;color:#374151;padding:4px 8px;border-radius:6px;font-size:11px;font-weight:600}
+        .badge-active{background:#D1FAE5;color:#065F46}
+        .badge-pending{background:#FEF3C7;color:#92400E}
+        .badge-soldout{background:#FEE2E2;color:#DC2626}
+        .badge-draft{background:#F3F4F6;color:#6B7280}
+
+        /* Category badges */
+        .cat-grains{background:linear-gradient(135deg,#10B981,#059669);color:#fff}
+        .cat-vegetables{background:linear-gradient(135deg,#F59E0B,#D97706);color:#fff}
+        .cat-fruits{background:linear-gradient(135deg,#EF4444,#DC2626);color:#fff}
+        .cat-livestock{background:linear-gradient(135deg,#8B5CF6,#7C3AED);color:#fff}
+        .cat-dairy{background:linear-gradient(135deg,#06B6D4,#0891B2);color:#fff}
+        .cat-poultry{background:linear-gradient(135deg,#F97316,#EA580C);color:#fff}
+        .cat-cashcrops{background:linear-gradient(135deg,#84CC16,#65A30D);color:#fff}
+        .cat-organic{background:linear-gradient(135deg,#14B8A6,#0F766E);color:#fff}
+
+        /* Modal */
+        #modal-overlay{
+            position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;
+            display:flex;align-items:center;justify-content:center;padding:20px;
+            opacity:0;pointer-events:none;transition:opacity .3s;
+        }
+        #modal-overlay.show{opacity:1;pointer-events:auto}
+        .modal-content{
+            background:#fff;border-radius:16px;max-width:500px;width:100%;
+            max-height:90vh;overflow-y:auto;padding:24px;
+            box-shadow:0 20px 60px rgba(0,0,0,.3);
+        }
+
+        /* Toast */
+        #toast-container{position:fixed;top:20px;right:20px;z-index:300}
+        .toast{
+            background:#fff;border-radius:8px;padding:12px 16px;margin-bottom:8px;
+            box-shadow:0 4px 16px rgba(0,0,0,.15);border-left:4px solid #10B981;
+            display:flex;align-items:center;gap:8px;font-size:14px;animation:slideIn .3s ease;
+        }
+        .toast-error{border-left-color:#EF4444}
+        .toast-info{border-left-color:#3B82F6}
+        .toast-success{border-left-color:#10B981}
+        @keyframes slideIn{from{transform:translateX(100%)}to{transform:translateX(0)}}
+
+        /* Sidebar overlay for mobile */
+        #sidebar-overlay{
+            position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99;
+            opacity:0;pointer-events:none;transition:opacity .3s;
+        }
+        #sidebar-overlay.show{opacity:1;pointer-events:auto}
+
+        /* Mobile */
+        @media(max-width:1023px){
+            #sidebar{transform:translateX(-260px)}
+            #sidebar.open{transform:translateX(0)}
+            #main{margin-left:0}
+            #main.expanded{margin-left:0}
+        }
+
+        /* Line clamp */
+        .line-clamp-2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <aside id="sidebar">
+        <div style="padding:24px 20px 16px;border-bottom:1px solid rgba(167,243,208,.2)">
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
+                <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#10B981,#F59E0B);display:flex;align-items:center;justify-content:center;font-weight:900;color:#fff;font-size:16px">A</div>
+                <div>
+                    <div style="font-weight:900;color:#A7F3D0;font-size:16px">Agro Tech Connect</div>
+                    <div style="font-size:11px;color:rgba(167,243,208,.6)">Bulk Buyer Dashboard</div>
+                </div>
+            </div>
+        </div>
+        <nav style="flex:1;padding:16px 0">
+            <div class="nav-link active" data-page="dashboard">
+                <i class="fas fa-tachometer-alt"></i>
+                <span>Dashboard</span>
+            </div>
+            <div class="nav-link" data-page="products">
+                <i class="fas fa-boxes"></i>
+                <span>Browse Products</span>
+            </div>
+            <div class="nav-link" data-page="inquiries">
+                <i class="fas fa-clipboard-list"></i>
+                <span>My Inquiries</span>
+                <span class="nav-badge" id="inquiry-count-badge">0</span>
+            </div>
+            <div class="nav-link" data-page="messages">
+                <i class="fas fa-comments"></i>
+                <span>Messages</span>
+                <span class="nav-badge" id="message-count-badge">0</span>
+            </div>
+            <div class="nav-link" data-page="favorites">
+                <i class="fas fa-heart"></i>
+                <span>Favorites</span>
+            </div>
+        </nav>
+        <div style="padding:16px 20px;border-top:1px solid rgba(167,243,208,.2)">
+            <div class="nav-link" data-page="settings">
+                <i class="fas fa-cog"></i>
+                <span>Settings</span>
+            </div>
+            <div class="nav-link" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Logout</span>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Sidebar overlay for mobile -->
+    <div id="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+    <!-- Main content -->
+    <main id="main">
+        <header style="background:#fff;border-bottom:1px solid #E5E7EB;padding:16px 24px;display:flex;align-items:center;justify-content:space-between">
+            <div style="display:flex;align-items:center;gap:16px">
+                <button onclick="toggleSidebar()" style="display:none;background:none;border:none;color:#6B7280;font-size:18px;padding:8px;cursor:pointer;border-radius:6px" class="lg:hidden">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <h1 id="page-title" style="font-size:24px;font-weight:900;color:#111827">Dashboard</h1>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px">
+                <button onclick="toggleNotifications()" style="position:relative;background:none;border:none;color:#6B7280;font-size:18px;padding:8px;cursor:pointer;border-radius:6px">
+                    <i class="fas fa-bell"></i>
+                    <span id="notif-dot" style="position:absolute;top:6px;right:6px;width:8px;height:8px;background:#EF4444;border-radius:50%;display:none"></span>
+                </button>
+                <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#10B981,#F59E0B);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700">B</div>
+            </div>
+        </header>
+
+        <!-- Notifications dropdown -->
+        <div id="notif-dropdown" style="position:absolute;top:64px;right:24px;width:320px;background:#fff;border-radius:12px;border:1px solid #E5E7EB;box-shadow:0 8px 32px rgba(0,0,0,.12);z-index:50;display:none">
+            <div style="padding:16px;border-bottom:1px solid #F3F4F6">
+                <h4 style="font-weight:700;color:#111827">Notifications</h4>
+            </div>
+            <div id="notif-list" style="max-height:300px;overflow-y:auto"></div>
+            <div style="padding:12px;border-top:1px solid #F3F4F6;text-align:center">
+                <button onclick="clearNotifications()" style="background:none;border:none;color:#6B7280;font-size:12px;cursor:pointer">Clear all</button>
+            </div>
+        </div>
+
+        <!-- Dashboard -->
+        <div id="page-dashboard" class="page active">
+            <div style="padding:24px">
+                <!-- Stats -->
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:32px">
+                    <div class="stat-card green">
+                        <div style="display:flex;align-items:center;justify-content:space-between">
+                            <div>
+                                <p style="color:#A7F3D0;font-size:12px;font-weight:600;margin-bottom:4px">Active Inquiries</p>
+                                <p style="color:#fff;font-size:28px;font-weight:900" id="stat-inquiries">0</p>
+                            </div>
+                            <i class="fas fa-clipboard-list" style="color:#6EE7B7;font-size:24px"></i>
+                        </div>
+                    </div>
+                    <div class="stat-card gold">
+                        <div style="display:flex;align-items:center;justify-content:space-between">
+                            <div>
+                                <p style="color:#FDE68A;font-size:12px;font-weight:600;margin-bottom:4px">Messages</p>
+                                <p style="color:#fff;font-size:28px;font-weight:900" id="stat-messages">0</p>
+                            </div>
+                            <i class="fas fa-comments" style="color:#FCD34D;font-size:24px"></i>
+                        </div>
+                    </div>
+                    <div class="stat-card orange">
+                        <div style="display:flex;align-items:center;justify-content:space-between">
+                            <div>
+                                <p style="color:#FED7AA;font-size:12px;font-weight:600;margin-bottom:4px">Favorites</p>
+                                <p style="color:#fff;font-size:28px;font-weight:900" id="stat-favorites">0</p>
+                            </div>
+                            <i class="fas fa-heart" style="color:#F97316;font-size:24px"></i>
+                        </div>
+                    </div>
+                    <div class="stat-card teal">
+                        <div style="display:flex;align-items:center;justify-content:space-between">
+                            <div>
+                                <p style="color:#A7F3D0;font-size:12px;font-weight:600;margin-bottom:4px">Total Spent</p>
+                                <p style="color:#fff;font-size:28px;font-weight:900" id="stat-spent">UGX 0</p>
+                            </div>
+                            <i class="fas fa-dollar-sign" style="color:#5EEAD4;font-size:24px"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">
+                    <div style="background:#fff;border-radius:16px;border:1px solid #E5E7EB;padding:20px">
+                        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+                            <h3 style="font-weight:900;color:#111827">Recent Inquiries</h3>
+                            <button style="color:#10B981;font-size:12px;font-weight:600" onclick="navigateTo('inquiries')">View all</button>
+                        </div>
+                        <div id="dashboard-inquiries" style="display:flex;flex-direction:column;gap:12px"></div>
+                    </div>
+                    <div style="background:#fff;border-radius:16px;border:1px solid #E5E7EB;padding:20px">
+                        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+                            <h3 style="font-weight:900;color:#111827">Activity Feed</h3>
+                        </div>
+                        <div id="activity-feed" style="display:flex;flex-direction:column;gap:12px"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Browse Products -->
+        <div id="page-products" class="page">
+            <div style="padding:24px">
+                <div style="display:flex;flex-wrap:wrap;gap:16px;margin-bottom:24px">
+                    <input type="text" placeholder="Search products..." style="flex:1;min-width:200px" class="form-input" id="product-search" oninput="renderProducts()">
+                    <select class="form-input" style="width:150px" id="filter-category" onchange="renderProducts()">
+                        <option value="">All Categories</option>
+                    </select>
+                    <select class="form-input" style="width:150px" id="filter-district" onchange="renderProducts()">
+                        <option value="">All Districts</option>
+                    </select>
+                </div>
+                <div id="products-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px"></div>
+            </div>
+        </div>
+
+        <!-- My Inquiries -->
+        <div id="page-inquiries" class="page">
+            <div style="padding:24px">
+                <div style="background:#fff;border-radius:16px;border:1px solid #E5E7EB;padding:20px;margin-bottom:24px">
+                    <h3 style="font-weight:900;color:#111827;margin-bottom:16px">My Bulk Inquiries</h3>
+                    <div id="inquiries-list" style="display:flex;flex-direction:column;gap:16px"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Messages -->
+        <div id="page-messages" class="page">
+            <div style="padding:24px">
+                <div style="background:#fff;border-radius:16px;border:1px solid #E5E7EB;padding:20px">
+                    <h3 style="font-weight:900;color:#111827;margin-bottom:16px">Messages</h3>
+                    <div id="conversations-list" style="display:flex;flex-direction:column;gap:16px"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Favorites -->
+        <div id="page-favorites" class="page">
+            <div style="padding:24px">
+                <div style="background:#fff;border-radius:16px;border:1px solid #E5E7EB;padding:20px">
+                    <h3 style="font-weight:900;color:#111827;margin-bottom:16px">Favorite Products</h3>
+                    <div id="favorites-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings -->
+        <div id="page-settings" class="page">
+            <div style="padding:24px;max-width:600px">
+                <div style="background:#fff;border-radius:16px;border:1px solid #E5E7EB;padding:24px">
+                    <h3 style="font-weight:900;color:#111827;margin-bottom:20px">Account Settings</h3>
+                    <div style="display:flex;flex-direction:column;gap:16px">
+                        <input type="text" placeholder="Full Name" class="form-input">
+                        <input type="email" placeholder="Email" class="form-input">
+                        <input type="text" placeholder="Organization" class="form-input">
+                        <input type="text" placeholder="Phone" class="form-input">
+                        <button class="btn-primary">Save Changes</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal & Toast -->
+    <div id="modal-overlay" onclick="closeModal(event)">
+        <div id="modal-content" onclick="event.stopPropagation()"></div>
+    </div>
+    <div id="toast-container"></div>
+
+    <script src="/js/api.js"></script>
+    <script>
+        // Data
+        let products = [];
+        let inquiries = [
+            {id:1, productId:1, quantity:500, message:'Looking for bulk maize supply', status:'pending', date:'2024-01-20'},
+            {id:2, productId:5, quantity:100, message:'Need avocados for export', status:'responded', date:'2024-01-18'}
+        ];
+        let conversations = [
+            {id:1, farmer:'John Kamau', messages:[{sender:'buyer',text:'Hi John, interested in your maize',time:'10:30 AM'}], unread:0}
+        ];
+        let favorites = [];
+        let notifications = [];
+
+        // Initialize
+        populateFilters();
+        loadProducts();
+        renderDashboard();
+        updateBadges();
+
+        function populateFilters(){
+            // Categories
+            const cats = ['Grains & Cereals','Vegetables','Fruits','Dairy','Livestock'];
+            const catSelect = document.getElementById('filter-category');
+            cats.forEach(cat => {
+                const opt = document.createElement('option');
+                opt.value = cat;
+                opt.textContent = cat;
+                catSelect.appendChild(opt);
+            });
+
+            // Districts
+            const districts = ['Nakuru','Nairobi','Kisumu','Mombasa','Eldoret'];
+            const distSelect = document.getElementById('filter-district');
+            districts.forEach(dist => {
+                const opt = document.createElement('option');
+                opt.value = dist;
+                opt.textContent = dist;
+                distSelect.appendChild(opt);
+            });
+        }
+
+        async function loadProducts(){
+            try{
+                products = await API.getProducts({});
+                renderProducts();
+            }catch(err){
+                console.error('Failed to load products', err);
+            }
+        }
+
+        function renderDashboard(){
+            animateNumber('stat-inquiries', inquiries.length);
+            animateNumber('stat-messages', conversations.reduce((s,c)=>s+c.unread,0));
+            animateNumber('stat-favorites', favorites.length);
+
+            const recentInq = inquiries.slice(0,3);
+            const dp = document.getElementById('dashboard-inquiries');
+            dp.innerHTML = recentInq.length ? recentInq.map(iq => `
+                <div style="display:flex;align-items:center;gap:12px;padding:12px;border-radius:8px;border:1px solid #E5E7EB">
+                    <div style="width:8px;height:8px;border-radius:50%;background:${iq.status==='pending'?'#F59E0B':'#10B981'}"></div>
+                    <div style="flex:1">
+                        <p style="font-weight:600;color:#111827">${iq.message}</p>
+                        <p style="font-size:12px;color:#6B7280">${iq.quantity} units • ${iq.date}</p>
+                    </div>
+                </div>
+            `).join('') : '<p style="color:#6B7280;text-align:center">No inquiries yet</p>';
+
+            document.getElementById('activity-feed').innerHTML = [
+                {icon:'fa-paper-plane',text:'Inquiry sent to John Kamau',time:'2h ago'},
+                {icon:'fa-reply',text:'Response from Mary\'s Farm',time:'5h ago'},
+                {icon:'fa-heart',text:'Added product to favorites',time:'1d ago'}
+            ].map(a => `
+                <div style="display:flex;align-items:center;gap:12px">
+                    <i class="fas ${a.icon}" style="color:#10B981;width:16px"></i>
+                    <div style="flex:1">
+                        <p style="font-size:14px;color:#111827">${a.text}</p>
+                        <p style="font-size:12px;color:#6B7280">${a.time}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderProducts(){
+            const search = (document.getElementById('product-search')?.value||'').toLowerCase();
+            const cat = document.getElementById('filter-category')?.value||'';
+            const dist = document.getElementById('filter-district')?.value||'';
+
+            let filtered = products.filter(p =>
+                (p.name.toLowerCase().includes(search) || p.category.toLowerCase().includes(search)) &&
+                (!cat || p.category === cat) &&
+                (!dist || p.district === dist)
+            );
+
+            const grid = document.getElementById('products-grid');
+            grid.innerHTML = filtered.map(p => `
+                <div class="product-card">
+                    <img src="${p.image||'https://picsum.photos/seed/p/400/200'}" alt="${p.name}" style="width:100%;height:160px;object-fit:cover">
+                    <div style="padding:16px">
+                        <h4 style="font-weight:700;color:#111827;margin-bottom:4px">${p.name}</h4>
+                        <p style="font-size:12px;color:#6B7280;margin-bottom:8px">${p.category} • ${p.district||'Unknown'}</p>
+                        <p style="font-weight:700;color:#10B981;margin-bottom:8px">UGX ${p.price?.toLocaleString()||'N/A'}</p>
+                        <div style="display:flex;gap:8px">
+                            <button onclick="sendInquiry(${p.id})" class="btn-primary" style="flex:1;font-size:12px">Send Inquiry</button>
+                            <button onclick="toggleFavorite(${p.id})" class="btn-secondary" style="font-size:12px">
+                                <i class="fas fa-heart" style="color:${favorites.includes(p.id)?'#EF4444':'#6B7280'}"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderInquiries(){
+            const list = document.getElementById('inquiries-list');
+            list.innerHTML = inquiries.map(iq => `
+                <div style="border:1px solid #E5E7EB;border-radius:8px;padding:16px">
+                    <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+                        <h4 style="font-weight:700;color:#111827">${iq.message}</h4>
+                        <span class="badge badge-${iq.status}">${iq.status}</span>
+                    </div>
+                    <p style="color:#6B7280;margin-bottom:8px">${iq.quantity} units requested</p>
+                    <p style="font-size:12px;color:#9CA3AF">${iq.date}</p>
+                </div>
+            `).join('');
+        }
+
+        function sendInquiry(productId){
+            const product = products.find(p => p.id === productId);
+            openModal(`
+                <h3 style="font-weight:900;color:#111827;margin-bottom:16px">Send Bulk Inquiry</h3>
+                <p style="color:#6B7280;margin-bottom:16px">Product: ${product.name}</p>
+                <form onsubmit="submitInquiry(event, ${productId})">
+                    <input type="number" placeholder="Quantity needed" class="form-input" style="margin-bottom:12px" required>
+                    <textarea placeholder="Your message..." class="form-input" rows="3" style="margin-bottom:16px" required></textarea>
+                    <div style="display:flex;gap:8px">
+                        <button type="submit" class="btn-primary">Send Inquiry</button>
+                        <button type="button" onclick="closeModal()" class="btn-secondary">Cancel</button>
+                    </div>
+                </form>
+            `);
+        }
+
+        function submitInquiry(event, productId){
+            event.preventDefault();
+            const form = event.target;
+            const quantity = form.querySelector('input').value;
+            const message = form.querySelector('textarea').value;
+
+            inquiries.push({
+                id: inquiries.length + 1,
+                productId,
+                quantity: parseInt(quantity),
+                message,
+                status: 'pending',
+                date: new Date().toISOString().split('T')[0]
+            });
+
+            updateBadges();
+            renderDashboard();
+            closeModal();
+            showToast('Inquiry sent successfully!', 'success');
+        }
+
+        function toggleFavorite(productId){
+            if(favorites.includes(productId)){
+                favorites = favorites.filter(id => id !== productId);
+            }else{
+                favorites.push(productId);
+            }
+            renderProducts();
+            renderFavorites();
+            updateBadges();
+        }
+
+        function renderFavorites(){
+            const grid = document.getElementById('favorites-grid');
+            const favProducts = products.filter(p => favorites.includes(p.id));
+            grid.innerHTML = favProducts.map(p => `
+                <div class="product-card">
+                    <img src="${p.image||'https://picsum.photos/seed/p/400/200'}" alt="${p.name}" style="width:100%;height:160px;object-fit:cover">
+                    <div style="padding:16px">
+                        <h4 style="font-weight:700;color:#111827;margin-bottom:4px">${p.name}</h4>
+                        <p style="font-size:12px;color:#6B7280;margin-bottom:8px">${p.category} • ${p.district||'Unknown'}</p>
+                        <p style="font-weight:700;color:#10B981;margin-bottom:8px">UGX ${p.price?.toLocaleString()||'N/A'}</p>
+                        <button onclick="toggleFavorite(${p.id})" class="btn-secondary" style="width:100%;font-size:12px">
+                            <i class="fas fa-heart" style="color:#EF4444"></i> Remove from Favorites
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function navigateTo(page){
+            document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+            const link = document.querySelector(`.nav-link[data-page="${page}"]`);
+            if(link) link.classList.add('active');
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            const target = document.getElementById('page-' + page);
+            if(target) target.classList.add('active');
+            const titles = {
+                dashboard: 'Dashboard',
+                products: 'Browse Products',
+                inquiries: 'My Inquiries',
+                messages: 'Messages',
+                favorites: 'Favorites',
+                settings: 'Settings'
+            };
+            document.getElementById('page-title').textContent = titles[page] || 'Dashboard';
+
+            if(page === 'products') renderProducts();
+            if(page === 'inquiries') renderInquiries();
+            if(page === 'favorites') renderFavorites();
+        }
+
+        function updateBadges(){
+            document.getElementById('inquiry-count-badge').textContent = inquiries.length;
+            document.getElementById('message-count-badge').textContent = conversations.reduce((s,c)=>s+c.unread,0);
+        }
+
+        function animateNumber(id, target){
+            const el = document.getElementById(id);
+            const start = parseInt(el.textContent.replace(/,/g,'')) || 0;
+            const dur = 700;
+            const t0 = performance.now();
+            (function step(now){
+                const p = Math.min((now - t0) / dur, 1);
+                const e = 1 - Math.pow(1 - p, 3);
+                el.textContent = Math.round(start + (target - start) * e).toLocaleString();
+                if(p < 1) requestAnimationFrame(step);
+            })(t0);
+        }
+
+        function toggleSidebar(){
+            const sb = document.getElementById('sidebar');
+            const ov = document.getElementById('sidebar-overlay');
+            if(window.innerWidth < 1024){
+                sb.classList.toggle('open');
+                ov.classList.toggle('show');
+            }else{
+                sb.classList.toggle('collapsed');
+                document.getElementById('main').classList.toggle('expanded');
+            }
+        }
+
+        function toggleNotifications(){
+            document.getElementById('notif-dropdown').classList.toggle('show');
+        }
+
+        document.addEventListener('click', e => {
+            if(!e.target.closest('.relative')) document.getElementById('notif-dropdown').classList.remove('show');
+        });
+
+        function openModal(html){
+            document.getElementById('modal-content').innerHTML = html;
+            document.getElementById('modal-content').className = 'modal-content';
+            document.getElementById('modal-overlay').classList.add('show');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal(e){
+            if(e && e.target !== document.getElementById('modal-overlay')) return;
+            document.getElementById('modal-overlay').classList.remove('show');
+            document.body.style.overflow = '';
+        }
+
+        function showToast(msg, type = 'success'){
+            const c = document.getElementById('toast-container');
+            const icons = {success:'fa-check-circle',error:'fa-exclamation-circle',info:'fa-info-circle'};
+            const t = document.createElement('div');
+            t.className = `toast toast-${type}`;
+            t.innerHTML = `<i class="fas ${icons[type]}"></i><span>${msg}</span>`;
+            c.appendChild(t);
+            setTimeout(() => {
+                t.style.opacity = '0';
+                t.style.transform = 'translateX(30px)';
+                t.style.transition = 'all .3s';
+                setTimeout(() => t.remove(), 300);
+            }, 3500);
+        }
+
+        function logout(){
+            localStorage.removeItem('agro_token');
+            window.location.href = '/auth';
+        }
+    </script>
+</body>
+</html>
